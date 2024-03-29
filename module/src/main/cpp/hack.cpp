@@ -68,7 +68,7 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 
     SetWallhack(true);
 
-    if(SetWallhack = true)
+    if(SetWallhack(true))
 {
     mlovinit();
     setShader("unity_SHC");
