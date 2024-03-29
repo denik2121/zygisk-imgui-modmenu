@@ -64,22 +64,22 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplAndroid_NewFrame(g_GlWidth, g_GlHeight);
     ImGui::NewFrame();
+    
 
     SetWallhack(true);
 
-    ImGui::EndFrame();
-    ImGui::Render();
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    return old_eglSwapBuffers(dpy, surface);
-}
-
-if(SetWallhack == true)
+    if(SetWallhack == true)
 {
     mlovinit();
     setShader("unity_SHC");
     LogShaders();
     Wallhack();
+}
+    ImGui::EndFrame();
+    ImGui::Render();
+    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    return old_eglSwapBuffers(dpy, surface);
 }
 
 void hack_start(const char *_game_data_dir) {
