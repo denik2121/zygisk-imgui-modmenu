@@ -31,6 +31,10 @@ HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
 }
 
 void SetupImGui() {
+        mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -65,10 +69,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     ImGui_ImplAndroid_NewFrame(g_GlWidth, g_GlHeight);
     ImGui::NewFrame();
     SetWallhack(true);
-    mlovinit();
-    setShader("unity_SHC");
-    LogShaders();
-    Wallhack();
     ImGui::EndFrame();
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
@@ -77,12 +77,20 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 }
 
 void hack_start(const char *_game_data_dir) {
+        mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
     LOGI("hack start | %s", _game_data_dir);
     do {
         sleep(1);
         g_TargetModule = utils::find_module(TargetLibName);
     } while (g_TargetModule.size <= 0);
     LOGI("%s: %p - %p",TargetLibName, g_TargetModule.start_address, g_TargetModule.end_address);    
+        mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
 }
 
 void hack_prepare(const char *_game_data_dir) {
@@ -104,5 +112,9 @@ void hack_prepare(const char *_game_data_dir) {
     }
     xdl_close(egl_handle);
 
-    hack_start(_game_data_dir);
+    hack_start(_game_data_dir
+            mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
 }
