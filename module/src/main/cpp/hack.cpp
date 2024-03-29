@@ -74,19 +74,21 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     return old_eglSwapBuffers(dpy, surface);
 }
 
+if(SetWallhack == true)
+{
+    mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
+}
+
 void hack_start(const char *_game_data_dir) {
     LOGI("hack start | %s", _game_data_dir);
     do {
         sleep(1);
         g_TargetModule = utils::find_module(TargetLibName);
     } while (g_TargetModule.size <= 0);
-    LOGI("%s: %p - %p",TargetLibName, g_TargetModule.start_address, g_TargetModule.end_address);
-
-    mlovinit();
-    setShader("unity_SHC");
-    LogShaders();
-    Wallhack();
-    
+    LOGI("%s: %p - %p",TargetLibName, g_TargetModule.start_address, g_TargetModule.end_address);    
 }
 
 void hack_prepare(const char *_game_data_dir) {
