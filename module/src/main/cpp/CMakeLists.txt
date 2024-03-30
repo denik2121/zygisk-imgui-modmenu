@@ -34,6 +34,7 @@ include_directories(
     xdl/include
     KittyMemory
     Substrate
+    Includes
 )
 
 aux_source_directory(xdl xdl-src)
