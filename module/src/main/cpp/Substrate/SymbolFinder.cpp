@@ -6,10 +6,9 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <cstring>
-#include <Includes/obfuscate.h>
 #include "SymbolFinder.h"
 
-#define TAG "MeSeHuke"
+#define TAG "MSHook"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,  TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 /* memory map for libraries */
@@ -31,11 +30,11 @@ struct symtab {
     struct symlist *dyn; /* dynamic symbols */
 };
 
-static void *xmalloc(size_t size) {
+static void* xmalloc(size_t size) {
     void *p;
     p = malloc(size);
     if (!p) {
-        printf(OBFUSCATE("Out of memory\n"));
+        printf("Out of memory\n");
         exit(1);
     }
     return p;
@@ -46,7 +45,7 @@ static int my_pread(int fd, void *buf, size_t count, off_t offset) {
     return read(fd, buf, count);
 }
 
-static struct symlist *get_syms(int fd, Elf32_Shdr *symh, Elf32_Shdr *strh) {
+static struct symlist* get_syms(int fd, Elf32_Shdr *symh, Elf32_Shdr *strh) {
     struct symlist *sl, *ret;
     int rv;
 
@@ -87,8 +86,7 @@ static struct symlist *get_syms(int fd, Elf32_Shdr *symh, Elf32_Shdr *strh) {
     }
 
     ret = sl;
-    out:
-    return ret;
+    out: return ret;
 }
 
 static int do_load(int fd, symtab_t symtab) {
@@ -105,19 +103,19 @@ static int do_load(int fd, symtab_t symtab) {
     /* elf header */
     rv = read(fd, &ehdr, sizeof(ehdr));
     if (0 > rv) {
-        LOGD(OBFUSCATE("read\n"));
+        LOGD("read\n");
         goto out;
     }
     if (rv != sizeof(ehdr)) {
-        LOGD(OBFUSCATE("elf error 1\n"));
+        LOGD("elf error 1\n");
         goto out;
     }
     if (strncmp((const char *) ELFMAG, (const char *) ehdr.e_ident, SELFMAG)) { /* sanity */
-        LOGD(OBFUSCATE("not an elf\n"));
+        LOGD("not an elf\n");
         goto out;
     }
     if (sizeof(Elf32_Shdr) != ehdr.e_shentsize) { /* sanity */
-        LOGD(OBFUSCATE("elf error 2\n"));
+        LOGD("elf error 2\n");
         goto out;
     }
 
@@ -126,11 +124,11 @@ static int do_load(int fd, symtab_t symtab) {
     shdr = (Elf32_Shdr *) xmalloc(size);
     rv = my_pread(fd, shdr, size, ehdr.e_shoff);
     if (0 > rv) {
-        LOGD(OBFUSCATE("read\n"));
+        LOGD("read\n");
         goto out;
     }
     if (rv != size) {
-        LOGD(OBFUSCATE("elf error 3 %d %d\n"), rv, size);
+        LOGD("elf error 3 %d %d\n", rv, size);
         goto out;
     }
 
@@ -139,11 +137,11 @@ static int do_load(int fd, symtab_t symtab) {
     shstrtab = (char *) xmalloc(size);
     rv = my_pread(fd, shstrtab, size, shdr[ehdr.e_shstrndx].sh_offset);
     if (0 > rv) {
-        LOGD(OBFUSCATE("read\n"));
+        LOGD("read\n");
         goto out;
     }
     if (rv != size) {
-        LOGD(OBFUSCATE("elf error 4 %d %d\n"), rv, size);
+        LOGD("elf error 4 %d %d\n", rv, size);
         goto out;
     }
 
@@ -153,42 +151,42 @@ static int do_load(int fd, symtab_t symtab) {
     for (i = 0, p = shdr; i < ehdr.e_shnum; i++, p++)
         if (SHT_SYMTAB == p->sh_type) {
             if (symh) {
-                LOGD(OBFUSCATE("too many symbol tables\n"));
+                LOGD("too many symbol tables\n");
                 goto out;
             }
             symh = p;
         } else if (SHT_DYNSYM == p->sh_type) {
             if (dynsymh) {
-                LOGD(OBFUSCATE("too many symbol tables\n"));
+                LOGD("too many symbol tables\n");
                 goto out;
             }
             dynsymh = p;
         } else if (SHT_STRTAB == p->sh_type
-                   && !strncmp(shstrtab + p->sh_name, OBFUSCATE(".strtab"), 7)) {
+                   && !strncmp(shstrtab + p->sh_name, ".strtab", 7)) {
             if (strh) {
-                LOGD(OBFUSCATE("too many string tables\n"));
+                LOGD("too many string tables\n");
                 goto out;
             }
             strh = p;
         } else if (SHT_STRTAB == p->sh_type
-                   && !strncmp(shstrtab + p->sh_name, OBFUSCATE(".dynstr"), 7)) {
+                   && !strncmp(shstrtab + p->sh_name, ".dynstr", 7)) {
             if (dynstrh) {
-                LOGD(OBFUSCATE("too many string tables\n"));
+                LOGD("too many string tables\n");
                 goto out;
             }
             dynstrh = p;
         }
     /* sanity checks */
     if ((!dynsymh && dynstrh) || (dynsymh && !dynstrh)) {
-        LOGD(OBFUSCATE("bad dynamic symbol table\n"));
+        LOGD("bad dynamic symbol table\n");
         goto out;
     }
     if ((!symh && strh) || (symh && !strh)) {
-        LOGD(OBFUSCATE("bad symbol table\n"));
+        LOGD("bad symbol table\n");
         goto out;
     }
     if (!dynsymh && !symh) {
-        LOGD(OBFUSCATE("no symbol table\n"));
+        LOGD("no symbol table\n");
         goto out;
     }
 
@@ -198,8 +196,7 @@ static int do_load(int fd, symtab_t symtab) {
     if (symh)
         symtab->st = get_syms(fd, symh, strh);
     ret = 0;
-    out:
-    free(shstrtab);
+    out: free(shstrtab);
     free(shdr);
     return ret;
 }
@@ -213,11 +210,11 @@ static symtab_t load_symtab(char *filename) {
 
     fd = open(filename, O_RDONLY);
     if (0 > fd) {
-        LOGE(OBFUSCATE("%s open\n"), __func__);
+        LOGE("%s open\n", __func__);
         return NULL;
     }
     if (0 > do_load(fd, symtab)) {
-        LOGE(OBFUSCATE("Error ELF parsing %s\n"), filename);
+        LOGE("Error ELF parsing %s\n", filename);
         free(symtab);
         symtab = NULL;
     }
@@ -228,7 +225,7 @@ static symtab_t load_symtab(char *filename) {
 static int load_memmap(pid_t pid, struct mm *mm, int *nmmp) {
     size_t buf_size = 0x40000;
     char *p_buf = (char *) malloc(buf_size); // increase this if needed for larger "maps"
-    char name[MAX_NAME_LEN] = {0};
+    char name[MAX_NAME_LEN] = { 0 };
     char *p;
     unsigned long start, end;
     struct mm *m;
@@ -236,10 +233,10 @@ static int load_memmap(pid_t pid, struct mm *mm, int *nmmp) {
     int fd, rv;
     int i;
 
-    sprintf(p_buf, OBFUSCATE("/proc/%d/maps"), pid);
+    sprintf(p_buf, "/proc/%d/maps", pid);
     fd = open(p_buf, O_RDONLY);
     if (0 > fd) {
-        LOGE(OBFUSCATE("Can't open %s for reading\n"), p_buf);
+        LOGE("Can't open %s for reading\n", p_buf);
         free(p_buf);
         return -1;
     }
@@ -251,7 +248,7 @@ static int load_memmap(pid_t pid, struct mm *mm, int *nmmp) {
     while (1) {
         rv = read(fd, p, buf_size - (p - p_buf));
         if (0 > rv) {
-            LOGE(OBFUSCATE("%s read"), __FUNCTION__);
+            LOGE("%s read", __FUNCTION__);
             free(p_buf);
             return -1;
         }
@@ -259,7 +256,7 @@ static int load_memmap(pid_t pid, struct mm *mm, int *nmmp) {
             break;
         p += rv;
         if (p - p_buf >= buf_size) {
-            LOGE(OBFUSCATE("Too many memory mapping\n"));
+            LOGE("Too many memory mapping\n");
             free(p_buf);
             return -1;
         }
@@ -270,7 +267,7 @@ static int load_memmap(pid_t pid, struct mm *mm, int *nmmp) {
     m = mm;
     while (p) {
         /* parse current map line */
-        rv = sscanf(p, OBFUSCATE("%08lx-%08lx %*s %*s %*s %*s %s\n"), &start, &end, name);
+        rv = sscanf(p, "%08lx-%08lx %*s %*s %*s %*s %s\n", &start, &end, name);
 
         p = strtok(NULL, "\n");
 
@@ -330,7 +327,7 @@ static int find_libname(const char *libn, char *name, int len, unsigned long *st
         p += strlen(libn);
 
         /* here comes our crude test -> 'libc.so' or 'libc-[0-9]' */
-        if (!strncmp(OBFUSCATE("so"), p, 2) || 1) // || (p[0] == '-' && isdigit(p[1])))
+        if (!strncmp("so", p, 2) || 1) // || (p[0] == '-' && isdigit(p[1])))
             break;
     }
     if (i >= nmm)
@@ -342,7 +339,7 @@ static int find_libname(const char *libn, char *name, int len, unsigned long *st
     if (strlen(m->name) >= len)
         name[len - 1] = '\0';
 
-    mprotect((void *) m->start, m->end - m->start,
+    mprotect((void*) m->start, m->end - m->start,
              PROT_READ | PROT_WRITE | PROT_EXEC);
     return 0;
 }
@@ -383,30 +380,30 @@ static int lookup_func_sym(symtab_t s, char *name, unsigned long *val) {
 
 int find_name(pid_t pid, const char *name, const char *libn,
               unsigned long *addr) {
-    struct mm mm[1000] = {0};
+    struct mm mm[1000] = { 0 };
     unsigned long libcaddr;
     int nmm;
-    char libc[1024] = {0};
+    char libc[1024] = { 0 };
     symtab_t s;
 
     if (0 > load_memmap(pid, mm, &nmm)) {
-        LOGD(OBFUSCATE("cannot read memory map\n"));
+        LOGD("cannot read memory map\n");
         return -1;
     }
     if (0
         > find_libname((char *) libn, (char *) libc, sizeof(libc),
                        &libcaddr, mm, nmm)) {
-        LOGD(OBFUSCATE("cannot find lib: %s\n"), libn);
+        LOGD("cannot find lib: %s\n", libn);
         return -1;
     }
     //LOGD("lib: >%s<\n", libc)
     s = load_symtab(libc);
     if (!s) {
-        LOGD(OBFUSCATE("cannot read symbol table\n"));
+        LOGD("cannot read symbol table\n");
         return -1;
     }
     if (0 > lookup_func_sym(s, (char *) name, addr)) {
-        LOGD(OBFUSCATE("cannot find function: %s\n"), name);
+        LOGD("cannot find function: %s\n", name);
         return -1;
     }
     *addr += libcaddr;
@@ -414,18 +411,18 @@ int find_name(pid_t pid, const char *name, const char *libn,
 }
 
 int find_libbase(pid_t pid, const char *libn, unsigned long *addr) {
-    struct mm mm[1000] = {0};
+    struct mm mm[1000] = { 0 };
     unsigned long libcaddr;
     int nmm;
-    char libc[1024] = {0};
+    char libc[1024] = { 0 };
     symtab_t s;
 
     if (0 > load_memmap(pid, mm, &nmm)) {
-        LOGD(OBFUSCATE("cannot read memory map\n"));
+        LOGD("cannot read memory map\n");
         return -1;
     }
     if (0 > find_libname(libn, libc, sizeof(libc), &libcaddr, mm, nmm)) {
-        LOGD(OBFUSCATE("cannot find lib\n"));
+        LOGD("cannot find lib\n");
         return -1;
     }
     *addr = libcaddr;
