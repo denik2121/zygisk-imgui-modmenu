@@ -4,9 +4,9 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <string>
+#include "Chams.h"
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
-
 #include "hack.h"
 #include "log.h"
 #include "game.h"
@@ -16,6 +16,8 @@
 #include "imgui_impl_android.h"
 #include "imgui_impl_opengl3.h"
 #include "MemoryPatch.h"
+#include <Substrate/SubstrateHook.h>
+#include <Substrate/CydiaSubstrate.h>
 
 static int                  g_GlHeight, g_GlWidth;
 static bool                 g_IsSetup = false;
@@ -63,7 +65,7 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     ImGui_ImplAndroid_NewFrame(g_GlWidth, g_GlHeight);
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    SetWallhack(true);
 
     ImGui::EndFrame();
     ImGui::Render();
@@ -80,7 +82,10 @@ void hack_start(const char *_game_data_dir) {
     } while (g_TargetModule.size <= 0);
     LOGI("%s: %p - %p",TargetLibName, g_TargetModule.start_address, g_TargetModule.end_address);
 
-    // TODO: hooking/patching here
+    mlovinit();
+    setShader("unity_SHC");
+    LogShaders();
+    Wallhack();
     
 }
 
