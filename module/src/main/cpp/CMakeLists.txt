@@ -33,6 +33,7 @@ include_directories(
     imgui/backends
     xdl/include
     KittyMemory
+    Substrate
 )
 
 aux_source_directory(xdl xdl-src)
